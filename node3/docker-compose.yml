@@ -1,0 +1,68 @@
+version: '3.7'
+
+services:
+
+   zookeeper:
+      image: confluentinc/cp-zookeeper:latest
+      hostname: zookeeper
+      container_name: zookeeper
+      volumes:
+         - "/etc/localtime:/etc/localtime:ro"
+         - "/etc/timezone:/etc/timezone:ro"
+      extra_hosts:
+         - "node1:${NODE_1}"
+         - "node2:${NODE_2}"
+         - "node3:${NODE_3}"
+      ports:
+         - "2181:2181"
+         - "2888:2888"
+         - "3888:3888"
+      environment:
+         ZOOKEEPER_SERVER_ID: 3                                                             # CHANGE !
+         ZOOKEEPER_CLIENT_PORT: 2181
+         ZOOKEEPER_SERVERS: node1:2888:3888;node2:2888:3888;node3:2888:3888
+         ZOOKEEPER_PEER_PORT: 2888
+         ZOOKEEPER_LEADER_PORT: 3888
+         ZOOKEEPER_TICK_TIME: 2000
+         ZOOKEEPER_INIT_LIMIT: 5
+         ZOOKEEPER_SYNC_LIMIT: 2
+         ZOOKEEPER_QUORUM_LISTEN_ON_ALL_IPS: "true"
+      networks:
+         - kafka-cluster-net
+
+   kafka:
+      image: confluentinc/cp-kafka:latest
+      hostname: kafka
+      container_name: kafka
+      extra_hosts:
+         - "node1:${NODE_1}"                                                                # corresponds to KAFKA_ZOOKEEPER_CONNECT
+         - "node2:${NODE_2}"
+         - "node3:${NODE_3}"
+      volumes:
+         - "/etc/localtime:/etc/localtime:ro"
+         - "/etc/timezone:/etc/timezone:ro"
+      ports:
+         - "9092:9092"
+      environment:
+         KAFKA_BROKER_ID: 3                                                                 # CHANGE !
+
+         KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,OUTSIDE://0.0.0.0:9392                    # Port UNIQUE to cluster but corresponds to KAFKA_ADVERTISED_LISTENERS
+         KAFKA_ADVERTISED_LISTENERS: INTERNAL://${NODE_3}:9092,OUTSIDE://localhost:9392     # Port UNIQUE to cluster but corresponds to KAFKA_LISTENERS
+
+
+         KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,OUTSIDE:PLAINTEXT
+         KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+
+         KAFKA_ZOOKEEPER_CONNECT: "node1:2181,node2:2181,node3:2181"                        # corresponds to extra_hosts
+         KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+         KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+      networks:
+         - kafka-cluster-net
+      depends_on:
+         - zookeeper
+
+
+networks:
+  kafka-cluster-net:
+    name: kafka-cluster-net
+    driver: bridge
