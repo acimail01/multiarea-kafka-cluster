@@ -48,7 +48,7 @@ services:
          KAFKA_BROKER_ID: 1                                                                 # CHANGE !
 
          KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,OUTSIDE://0.0.0.0:9192                    # Port UNIQUE to cluster but corresponds to KAFKA_ADVERTISED_LISTENERS
-         KAFKA_ADVERTISED_LISTENERS: INTERNAL://${NODE_3}:9092,OUTSIDE://localhost:9192     # Port UNIQUE to cluster but corresponds to KAFKA_LISTENERS
+         KAFKA_ADVERTISED_LISTENERS: INTERNAL://${NODE_1}:9092,OUTSIDE://localhost:9192     # Port UNIQUE to cluster but corresponds to KAFKA_LISTENERS
 
 
          KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,OUTSIDE:PLAINTEXT
